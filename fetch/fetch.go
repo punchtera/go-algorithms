@@ -1,0 +1,41 @@
+package main
+
+import (
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"strings"
+)
+
+func main() {
+	for _, url := range os.Args[1:] {
+
+		hasHttpsPrefix := strings.HasPrefix(url, "https://")
+		hasHttpPrefix := strings.HasPrefix(url, "http://")
+
+		if hasHttpsPrefix == false && hasHttpPrefix == false {
+			fmt.Fprintf(os.Stderr, "lack http or https prefix - %s", url)
+			os.Exit(1)
+		}
+
+		resp, err := http.Get(url)
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "fetch %v\n", err)
+			os.Exit(1)
+		}
+
+		b, err := io.Copy(os.Stdout, resp.Body)
+		fmt.Print("\n")
+		// b, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Fetch reading %s %v\n", url, err)
+			os.Exit(1)
+		}
+		fmt.Printf("Status Code: %s\n", resp.Status)
+		fmt.Printf("Number of bytes: -%v\n", b)
+	}
+}
